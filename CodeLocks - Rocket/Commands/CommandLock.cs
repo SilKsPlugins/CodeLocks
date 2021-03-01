@@ -31,7 +31,7 @@ namespace CodeLocks.Commands
 
             void Say(string key, params object[] placeholder)
             {
-                UnturnedChat.Say(player, CodeLocksPlugin.Instance!.Translate(key, placeholder));
+                UnturnedChat.Say(player, CodeLocksPlugin.Instance!.Translate(key, placeholder), true);
             }
 
             if (command.Length == 0 || (command.Length == 1 && command[0].ToLower() == "help"))

@@ -28,7 +28,7 @@ namespace CodeLocks.Commands
 
             void Say(string key, params object[] placeholder)
             {
-                UnturnedChat.Say(player, CodeLocksPlugin.Instance!.Translate(key, placeholder));
+                UnturnedChat.Say(player, CodeLocksPlugin.Instance!.Translate(key, placeholder), true);
             }
 
             var lockable = LockableInteractable.RaycastForInteractable(player.Player);

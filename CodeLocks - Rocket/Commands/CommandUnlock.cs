@@ -1,9 +1,10 @@
 ﻿using CodeLocks.Locks;
 using JetBrains.Annotations;
 using Rocket.API;
-using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
+using SDG.Unturned;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace CodeLocks.Commands
 {
@@ -28,7 +29,8 @@ namespace CodeLocks.Commands
 
             void Say(string key, params object[] placeholder)
             {
-                UnturnedChat.Say(player, CodeLocksPlugin.Instance!.Translate(key, placeholder), true);
+                ChatManager.say(player.CSteamID, CodeLocksPlugin.Instance!.Translate(key, placeholder), Color.green,
+                    true);
             }
 
             var lockable = LockableInteractable.RaycastForInteractable(player.Player);

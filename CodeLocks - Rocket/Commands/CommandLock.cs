@@ -1,10 +1,11 @@
 ﻿using CodeLocks.Locks;
 using JetBrains.Annotations;
 using Rocket.API;
-using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
+using SDG.Unturned;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace CodeLocks.Commands
 {
@@ -31,7 +32,8 @@ namespace CodeLocks.Commands
 
             void Say(string key, params object[] placeholder)
             {
-                UnturnedChat.Say(player, CodeLocksPlugin.Instance!.Translate(key, placeholder), true);
+                ChatManager.say(player.CSteamID, CodeLocksPlugin.Instance!.Translate(key, placeholder), Color.green,
+                    true);
             }
 
             if (command.Length == 0 || (command.Length == 1 && command[0].ToLower() == "help"))

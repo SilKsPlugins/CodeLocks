@@ -1,4 +1,4 @@
-name: Cooldowns Release
+name: CodeLocks Release
 
 on:
   workflow_dispatch:
@@ -64,7 +64,7 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./Rocket/Release.zip
-        asset_name: Rocket Release.zip
+        asset_name: CodeLocks-Rocket-v${{ github.event.inputs.version }}.zip
         asset_content_type: application/zip
     - name: Upload OpenMod release asset
       uses: actions/upload-release-asset@v1
@@ -73,5 +73,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./OpenMod/Release.zip
-        asset_name: OpenMod Release.zip
+        asset_name: CodeLocks-OpenMod-v${{ github.event.inputs.version }}.zip
         asset_content_type: application/zip

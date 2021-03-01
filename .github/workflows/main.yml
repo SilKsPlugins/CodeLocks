@@ -27,7 +27,7 @@ jobs:
     - name: Install zip
       run: sudo apt-get install zip
     - name: Zip Rocket release artifacts
-      run:
+      run: |
         mkdir -p ./Rocket/Plugins ./Rocket/Libraries
         cd "./CodeLocks - Rocket/bin/Release/net461"
         mv CodeLocks.dll ../../../../Rocket/Plugins

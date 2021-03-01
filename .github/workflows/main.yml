@@ -23,13 +23,12 @@ jobs:
     - name: Update versions
       run: "sed -i \"s#<Version>0.0.0</Version>#<Version>${{ github.event.inputs.version }}</Version>#\" \"CodeLocks - OpenMod/CodeLocks - OpenMod.csproj\" \"CodeLocks - Rocket/CodeLocks - Rocket.csproj\""
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --configuration Release --no-restore
     - name: Install zip
       run: sudo apt-get install zip
     - name: Zip Rocket release artifacts
       run: |
         mkdir -p ./Rocket/Plugins ./Rocket/Libraries
-        ls "./CodeLocks - Rocket/bin/Release"
         cd "./CodeLocks - Rocket/bin/Release/net461"
         mv CodeLocks.dll ../../../../Rocket/Plugins
         mv *.dll ../../../../Rocket/Libraries

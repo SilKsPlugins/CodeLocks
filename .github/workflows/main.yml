@@ -1,11 +1,8 @@
 name: CodeLocks Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Plugin Version'
-        required: true
+  release:
+    types: [ published ]
 
 jobs:
   build:
@@ -21,7 +18,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Update versions
-      run: "sed -i \"s#<Version>0.0.0</Version>#<Version>${{ github.event.inputs.version }}</Version>#\" \"CodeLocks - OpenMod/CodeLocks - OpenMod.csproj\" \"CodeLocks - Rocket/CodeLocks - Rocket.csproj\""
+      run: "sed -i \"s#<Version>0.0.0</Version>#<Version>${{ github.event.release.tag_name }}</Version>#\" \"CodeLocks - OpenMod/CodeLocks - OpenMod.csproj\" \"CodeLocks - Rocket/CodeLocks - Rocket.csproj\""
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Install zip
@@ -47,16 +44,6 @@ jobs:
         zip -qr ./Release.zip *
         cd ..
       shell: bash
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.event.inputs.version }}
-        release_name: CodeLocks Release ${{ github.event.inputs.version }}
-        draft: false
-        prerelease: false
     - name: Upload Rocket release asset
       uses: actions/upload-release-asset@v1
       env:
@@ -64,7 +51,7 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./Rocket/Release.zip
-        asset_name: CodeLocks-Rocket-v${{ github.event.inputs.version }}.zip
+        asset_name: CodeLocks-Rocket-v${{ github.event.release.tag_name }}.zip
         asset_content_type: application/zip
     - name: Upload OpenMod release asset
       uses: actions/upload-release-asset@v1
@@ -73,5 +60,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./OpenMod/Release.zip
-        asset_name: CodeLocks-OpenMod-v${{ github.event.inputs.version }}.zip
+        asset_name: CodeLocks-OpenMod-v${{ github.event.release.tag_name }}.zip
         asset_content_type: application/zip

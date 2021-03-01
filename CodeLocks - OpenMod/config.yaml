@@ -1,0 +1,12 @@
+effects:
+  ui: 29123
+  success: 29124
+  failure: 29125
+
+attempts:
+  cooldown: 60 # Cooldown in seconds
+  damages:
+  - 0 # Occurs on the first attempt
+  - 30 # Occurs on the second attempt
+  - 50
+  - 255 # Max damage. Occurs on the fourth attempt, and all others

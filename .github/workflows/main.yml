@@ -29,6 +29,7 @@ jobs:
     - name: Zip Rocket release artifacts
       run: |
         mkdir -p ./Rocket/Plugins ./Rocket/Libraries
+        ls "./CodeLocks - Rocket/bin/Release"
         cd "./CodeLocks - Rocket/bin/Release/net461"
         mv CodeLocks.dll ../../../../Rocket/Plugins
         mv *.dll ../../../../Rocket/Libraries

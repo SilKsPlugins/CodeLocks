@@ -1,13 +1,14 @@
 using CodeLocks.Configuration;
 using CodeLocks.Locks;
 using CodeLocks.UI;
+using HarmonyLib;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
+using SDG.Unturned;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 using ObjectManager = CodeLocks.Locks.ObjectManager;
 
@@ -23,9 +24,15 @@ namespace CodeLocks
 
         private readonly List<Attempt> _attempts = new();
 
+        public const string HarmonyId = "com.iamsilk.codelocks";
+        public Harmony? HarmonyInstance { get; private set; }
+
         protected override void Load()
         {
             Instance = this;
+
+            HarmonyInstance = new Harmony(HarmonyId);
+            HarmonyInstance.PatchAll(GetType().Assembly);
 
             var lazyCodeLockManager = new Lazy<CodeLockManager>(() => CodeLockManager!);
 
@@ -57,6 +64,9 @@ namespace CodeLocks
             _uiManager.Unload();
             _objectManager.Unload();
             CodeLockManager.Save();
+
+            HarmonyInstance!.UnpatchAll(HarmonyId);
+            HarmonyInstance = null;
 
             Instance = null;
         }

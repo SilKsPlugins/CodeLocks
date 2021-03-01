@@ -51,4 +51,10 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="product.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

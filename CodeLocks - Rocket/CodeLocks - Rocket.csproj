@@ -17,16 +17,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Commands\CommandLockOM.cs" />
-	  <Compile Remove="Commands\CommandUnlockOM.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Include="Commands\CommandLockOM.cs" />
-	  <None Include="Commands\CommandUnlockOM.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <PackageReference Include="Lib.Harmony" Version="2.0.4" />
 	</ItemGroup>
 

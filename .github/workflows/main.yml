@@ -1,4 +1,4 @@
-name: .NET
+name: Cooldowns Release
 
 on:
   workflow_dispatch:

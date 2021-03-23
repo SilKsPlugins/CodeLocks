@@ -1,8 +1,10 @@
 ﻿using SDG.Unturned;
 using Steamworks;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Action = System.Action;
 
 namespace CodeLocks.Locks
 {
@@ -17,14 +19,16 @@ namespace CodeLocks.Locks
 
         public void Load()
         {
-            UnturnedPatches.OnBarricadesSent += OnBarricadesSent;
+            UnturnedPatches.OnBarricadeRegionSending += OnBarricadeRegionSending;
+            UnturnedPatches.OnBarricadeRegionSent+= OnBarricadeRegionSent;
             UnturnedPatches.OnUpdatingStateInternal += OnUpdatingStateInternal;
             UnturnedPatches.OnBarricadeDestroyed += OnBarricadeDestroyed;
         }
 
         public void Unload()
         {
-            UnturnedPatches.OnBarricadesSent -= OnBarricadesSent;
+            UnturnedPatches.OnBarricadeRegionSending -= OnBarricadeRegionSending;
+            UnturnedPatches.OnBarricadeRegionSent -= OnBarricadeRegionSent;
             UnturnedPatches.OnUpdatingStateInternal -= OnUpdatingStateInternal;
             UnturnedPatches.OnBarricadeDestroyed -= OnBarricadeDestroyed;
         }
@@ -202,11 +206,15 @@ namespace CodeLocks.Locks
             BarricadeManager.changeOwnerAndGroup(drop.model, newOwner, newGroup);
         }
 
-        private void OnBarricadesSent(CSteamID steamId, byte x, byte y, ushort plant)
+        private Action? _restoreBarricadeRegion;
+
+        private void OnBarricadeRegionSending(SteamPlayer player, byte x, byte y, ushort plant)
         {
             if (!BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
 
             if (region.barricades.Count == 0 || region.drops.Count != region.barricades.Count) return;
+
+            var changedBarricades = new List<(BarricadeData, ulong, ulong)>();
             
             foreach (var barricade in region.barricades)
             {
@@ -216,8 +224,25 @@ namespace CodeLocks.Locks
 
                 if (codeLock == null) continue;
 
-                UpdateBarricade(codeLock, steamId);
+                changedBarricades.Add((barricade, barricade.owner, barricade.group));
+                
+                barricade.owner = player.playerID.steamID.m_SteamID;
+                barricade.group = 0;
             }
+
+            _restoreBarricadeRegion = () =>
+            {
+                foreach (var (barricade, owner, @group) in changedBarricades)
+                {
+                    barricade.owner = owner;
+                    barricade.group = group;
+                }
+            };
+        }
+
+        private void OnBarricadeRegionSent(SteamPlayer player, byte x, byte y, ushort plant)
+        {
+            _restoreBarricadeRegion?.Invoke();
         }
 
         private void OnUpdatingStateInternal(Transform barricade, byte[] state, int size, ref bool shouldReplicate)

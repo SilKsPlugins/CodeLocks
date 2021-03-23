@@ -9,34 +9,34 @@ namespace CodeLocks
 {
     public class UnturnedPatches
     {
-        public delegate void Punch(Player player);
-        public static event Punch OnPunch = null!;
-
         public delegate void BarricadesSave();
-        public static event BarricadesSave OnBarricadesSave = null!;
+        public static event BarricadesSave? OnBarricadesSave;
 
-        public delegate void BarricadesSent(CSteamID steamId, byte x, byte y, ushort plant);
-        public static event BarricadesSent OnBarricadesSent = null!;
+        public delegate void BarricadeRegionSending(SteamPlayer player, byte x, byte y, ushort plant);
+        public static event BarricadeRegionSending? OnBarricadeRegionSending;
+
+        public delegate void BarricadeRegionSent(SteamPlayer player, byte x, byte y, ushort plant);
+        public static event BarricadeRegionSent? OnBarricadeRegionSent;
 
         public delegate void CheckingDoorAccess(
             CSteamID steamId,
             InteractableDoor door,
             ref bool intercept,
             ref bool shouldAllow);
-        public static event CheckingDoorAccess OnCheckingDoorAccess = null!;
+        public static event CheckingDoorAccess? OnCheckingDoorAccess;
 
         public delegate void UpdatingStateInternal(
-            Transform barricade, 
+            Transform barricade,
             byte[] state, int size,
             ref bool shouldReplicate);
-        public static event UpdatingStateInternal OnUpdatingStateInternal = null!;
+        public static event UpdatingStateInternal? OnUpdatingStateInternal;
 
         public delegate void CheckingStorageAccess(
             CSteamID steamId,
             InteractableStorage storage,
             ref bool intercept,
             ref bool shouldAllow);
-        public static event CheckingStorageAccess OnCheckingStorageAccess = null!;
+        public static event CheckingStorageAccess? OnCheckingStorageAccess;
 
         public delegate void BarricadeDestroyed(BarricadeRegion region, ushort index);
         public static event BarricadeDestroyed OnBarricadeDestroyed = null!;
@@ -44,13 +44,6 @@ namespace CodeLocks
         [HarmonyPatch]
         private class Patches
         {
-            [HarmonyPatch(typeof(PlayerEquipment), "punch")]
-            [HarmonyPrefix]
-            private static void Punch(PlayerEquipment __instance)
-            {
-                OnPunch?.Invoke(__instance.player);
-            }
-
             [HarmonyPatch(typeof(BarricadeManager), "save")]
             [HarmonyPrefix]
             private static void Save()
@@ -58,11 +51,18 @@ namespace CodeLocks
                 OnBarricadesSave?.Invoke();
             }
 
-            [HarmonyPatch(typeof(BarricadeManager), "askBarricades")]
-            [HarmonyPostfix]
-            private static void AskBarricades(CSteamID steamID, byte x, byte y, ushort plant)
+            [HarmonyPatch(typeof(BarricadeManager), "SendRegion")]
+            [HarmonyPrefix]
+            private static void PreSendRegion(SteamPlayer client, byte x, byte y, ushort plant)
             {
-                OnBarricadesSent?.Invoke(steamID, x, y, plant);
+                OnBarricadeRegionSending?.Invoke(client, x, y, plant);
+            }
+
+            [HarmonyPatch(typeof(BarricadeManager), "SendRegion")]
+            [HarmonyPostfix]
+            private static void PostSendRegion(SteamPlayer client, byte x, byte y, ushort plant)
+            {
+                OnBarricadeRegionSent?.Invoke(client, x, y, plant);
             }
 
             [HarmonyPatch(typeof(InteractableDoor), "checkToggle")]

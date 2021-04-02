@@ -1,4 +1,6 @@
-﻿using SDG.Unturned;
+﻿using HarmonyLib;
+using SDG.NetTransport;
+using SDG.Unturned;
 using Steamworks;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,24 @@ namespace CodeLocks.Locks
 {
     public class ObjectManager
     {
+        private static readonly ClientStaticMethod<byte, byte, ushort, ushort, byte[]> s_SendBarricadeUpdateState;
+
+        private static readonly
+            ClientStaticMethod<byte, byte, ushort, ushort, ulong, ulong> s_SendBarricadeOwnerAndGroup;
+
+        static ObjectManager()
+        {
+            s_SendBarricadeUpdateState =
+                AccessTools
+                    .StaticFieldRefAccess<BarricadeManager, ClientStaticMethod<byte, byte, ushort, ushort, byte[]>>(
+                        "SendBarricadeUpdateState");
+
+            s_SendBarricadeOwnerAndGroup =
+                AccessTools
+                    .StaticFieldRefAccess<BarricadeManager, ClientStaticMethod<byte, byte, ushort, ushort, ulong, ulong>>(
+                        "SendBarricadeOwnerAndGroup");
+        }
+
         private readonly Lazy<CodeLockManager> _codeLockManager;
 
         public ObjectManager(Lazy<CodeLockManager> codeLockManager)
@@ -139,15 +159,15 @@ namespace CodeLocks.Locks
 
             ModifyStateForClient(drop.interactable, steamId, state);
 
-            BarricadeManager.instance.channel.send("tellBarricadeUpdateState",
-                steamId, ESteamPacket.UPDATE_RELIABLE_BUFFER,
-                x, y, plant, index, state);
+            var transportConnection = Provider.findTransportConnection(steamId) ??
+                                      throw new Exception("Could not get transport connection for player");
+
+            s_SendBarricadeUpdateState.Invoke(ENetReliability.Reliable, transportConnection, x, y, plant, index, state);
 
             if (drop.interactable is not InteractableDoor)
             {
-                BarricadeManager.instance.channel.send("tellBarricadeOwnerAndGroup",
-                    steamId, ESteamPacket.UPDATE_RELIABLE_BUFFER,
-                    steamId.m_SteamID, (ulong)0);
+                s_SendBarricadeOwnerAndGroup.Invoke(ENetReliability.Reliable, transportConnection, x, y, plant, index,
+                    steamId.m_SteamID, 0);
             }
         }
 

@@ -16,11 +16,11 @@
     <AssemblyName>CodeLocks</AssemblyName>
     <Authors>SilK</Authors>
     <Company>SilK's Plugins</Company>
-    <Copyright>Copyright © SilK's Plugins 2020</Copyright>
+    <Copyright>Copyright © SilK's Plugins 2021</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenMod.Unturned" Version="3.0.15+28c6941" />
+    <PackageReference Include="OpenMod.Unturned" Version="3.0.23" />
     <PackageReference Include="Legacy2CPSWorkaround" Version="1.0.0">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
@@ -28,6 +28,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="OpenMod.Unturned.Redist" Version="3.21.11-beta4" />
   </ItemGroup>
 
   <ItemGroup>

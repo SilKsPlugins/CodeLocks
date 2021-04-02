@@ -92,7 +92,7 @@ namespace CodeLocks.Locks
             switch (interactable)
             {
                 case InteractableStorage:
-                case InteractableDoor:
+                case InteractableDoor: 
                     var playerIdBytes = BitConverter.GetBytes(steamId.m_SteamID);
                     Array.Copy(playerIdBytes, 0, state, 0, 8);
                     break;
@@ -234,28 +234,34 @@ namespace CodeLocks.Locks
 
             if (region.barricades.Count == 0 || region.drops.Count != region.barricades.Count) return;
 
-            var changedBarricades = new List<(BarricadeData, ulong, ulong)>();
-            
-            foreach (var barricade in region.barricades)
+            var changedBarricades = new List<(BarricadeData, ulong, ulong, byte[])>();
+
+            for (var i = 0; i < region.barricades.Count; i++)
             {
-                var instanceId = barricade.instanceID;
-
-                var codeLock = _codeLockManager.Value.GetCodeLock(instanceId);
-
+                var barricade = region.barricades[i];
+                var drop = region.drops[i];
+                
+                var codeLock = _codeLockManager.Value.GetCodeLock(barricade.instanceID);
                 if (codeLock == null) continue;
 
-                changedBarricades.Add((barricade, barricade.owner, barricade.group));
-                
+                changedBarricades.Add((barricade, barricade.owner, barricade.group, barricade.barricade.state));
+
                 barricade.owner = player.playerID.steamID.m_SteamID;
                 barricade.group = 0;
+
+                var state = barricade.barricade.state.ToArray();
+                ModifyStateForClient(drop.interactable, player.playerID.steamID, state);
+
+                barricade.barricade.state = state;
             }
 
             _restoreBarricadeRegion = () =>
             {
-                foreach (var (barricade, owner, @group) in changedBarricades)
+                foreach (var (barricade, owner, group, state) in changedBarricades)
                 {
                     barricade.owner = owner;
                     barricade.group = group;
+                    barricade.barricade.state = state;
                 }
             };
         }

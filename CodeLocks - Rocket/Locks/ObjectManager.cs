@@ -233,20 +233,25 @@ namespace CodeLocks.Locks
 
             if (region.barricades.Count == 0 || region.drops.Count != region.barricades.Count) return;
 
-            var changedBarricades = new List<Tuple<BarricadeData, ulong, ulong>>();
+            var changedBarricades = new List<Tuple<BarricadeData, ulong, ulong, byte[]>>();
 
-            foreach (var barricade in region.barricades)
+            for (var i = 0; i < region.barricades.Count; i++)
             {
-                var instanceId = barricade.instanceID;
+                var barricade = region.barricades[i];
+                var drop = region.drops[i];
 
-                var codeLock = _codeLockManager.Value.GetCodeLock(instanceId);
-
+                var codeLock = _codeLockManager.Value.GetCodeLock(barricade.instanceID);
                 if (codeLock == null) continue;
 
-                changedBarricades.Add(new(barricade, barricade.owner, barricade.group));
+                changedBarricades.Add(new Tuple<BarricadeData, ulong, ulong, byte[]>(barricade, barricade.owner, barricade.group, barricade.barricade.state));
 
                 barricade.owner = player.playerID.steamID.m_SteamID;
                 barricade.group = 0;
+
+                var state = barricade.barricade.state.ToArray();
+                ModifyStateForClient(drop.interactable, player.playerID.steamID, state);
+
+                barricade.barricade.state = state;
             }
 
             _restoreBarricadeRegion = () =>
@@ -255,6 +260,7 @@ namespace CodeLocks.Locks
                 {
                     barricade.Item1.owner = barricade.Item2;
                     barricade.Item1.group = barricade.Item3;
+                    barricade.Item1.barricade.state = barricade.Item4;
                 }
             };
         }

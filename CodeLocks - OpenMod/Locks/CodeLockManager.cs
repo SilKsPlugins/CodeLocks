@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,6 +45,13 @@ namespace CodeLocks.Locks
 
                 if (CodeLockInfo.TryParse(line, out var lockInfo))
                     _codeLocks.Add(lockInfo.InstanceId, lockInfo);
+            }
+
+            await UniTask.SwitchToMainThread();
+
+            foreach (var pair in _codeLocks)
+            {
+                _objectManager.UpdateBarricade(pair.Value);
             }
         }
 

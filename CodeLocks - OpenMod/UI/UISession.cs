@@ -4,6 +4,7 @@ using Steamworks;
 using System;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using SDG.NetTransport;
 
 namespace CodeLocks.UI
 {
@@ -15,7 +16,7 @@ namespace CodeLocks.UI
 
         public Player Player { get; }
 
-        public CSteamID SteamId => Player.channel.owner.playerID.steamID;
+        public ITransportConnection TransportConnection => Player.channel.owner.transportConnection;
 
         public CodeLockInfo CodeLock { get; }
 
@@ -35,7 +36,7 @@ namespace CodeLocks.UI
 
         public void StartSession()
         {
-            EffectManager.sendUIEffect(_uiManager.GetUIEffectId(), _uiManager.GetUIEffectKey(), SteamId, true);
+            EffectManager.sendUIEffect(_uiManager.GetUIEffectId(), _uiManager.GetUIEffectKey(), TransportConnection, true);
 
             Player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, true);
             Player.setPluginWidgetFlag(EPluginWidgetFlags.ForceBlur, true);
@@ -46,14 +47,14 @@ namespace CodeLocks.UI
             Player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, false);
             Player.setPluginWidgetFlag(EPluginWidgetFlags.ForceBlur, false);
 
-            EffectManager.askEffectClearByID(_uiManager.GetUIEffectId(), SteamId);
+            EffectManager.askEffectClearByID(_uiManager.GetUIEffectId(), TransportConnection);
 
             _sessionEndedCallback(this);
         }
 
         private void SetInputText(int index, string text)
         {
-            EffectManager.sendUIEffectText(_uiManager.GetUIEffectKey(), SteamId, true, "Input" + (index + 1), text);
+            EffectManager.sendUIEffectText(_uiManager.GetUIEffectKey(), TransportConnection, true, "Input" + (index + 1), text);
         }
 
         public void PressedButton(string buttonName)
@@ -114,11 +115,11 @@ namespace CodeLocks.UI
 
                             SetAllInputTexts(text);
 
-                            EffectManager.sendUIEffect(soundEffectId, (short)soundEffectId, SteamId, true);
+                            EffectManager.sendUIEffect(soundEffectId, (short)soundEffectId, TransportConnection, true);
 
                             await UniTask.Delay(400);
 
-                            EffectManager.askEffectClearByID(soundEffectId, SteamId);
+                            EffectManager.askEffectClearByID(soundEffectId, TransportConnection);
 
                             CodeEnteredCallback(Player, CodeLock, parsed.Value);
 

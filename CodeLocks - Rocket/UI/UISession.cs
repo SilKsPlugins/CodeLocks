@@ -1,6 +1,6 @@
 ﻿using CodeLocks.Locks;
+using SDG.NetTransport;
 using SDG.Unturned;
-using Steamworks;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -15,7 +15,7 @@ namespace CodeLocks.UI
 
         public Player Player { get; private set; } = null!;
 
-        public CSteamID SteamId => Player.channel.owner.playerID.steamID;
+        public ITransportConnection TransportConnection => Player.channel.owner.transportConnection;
 
         public CodeLockInfo CodeLock { get; private set; } = null!;
 
@@ -31,7 +31,7 @@ namespace CodeLocks.UI
             CodeLock = codeLock;
             CodeEnteredCallback = codeEnteredCallback;
 
-            EffectManager.sendUIEffect(_uiManager.GetUIEffectId(), _uiManager.GetUIEffectKey(), SteamId, true);
+            EffectManager.sendUIEffect(_uiManager.GetUIEffectId(), _uiManager.GetUIEffectKey(), TransportConnection, true);
 
             Player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, true);
             Player.setPluginWidgetFlag(EPluginWidgetFlags.ForceBlur, true);
@@ -42,7 +42,7 @@ namespace CodeLocks.UI
             Player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, false);
             Player.setPluginWidgetFlag(EPluginWidgetFlags.ForceBlur, false);
 
-            EffectManager.askEffectClearByID(_uiManager.GetUIEffectId(), SteamId);
+            EffectManager.askEffectClearByID(_uiManager.GetUIEffectId(), TransportConnection);
 
             _sessionEndedCallback?.Invoke(this);
         }
@@ -54,7 +54,7 @@ namespace CodeLocks.UI
 
         private void SetInputText(int index, string text)
         {
-            EffectManager.sendUIEffectText(_uiManager.GetUIEffectKey(), SteamId, true, "Input" + (index + 1), text);
+            EffectManager.sendUIEffectText(_uiManager.GetUIEffectKey(), TransportConnection, true, "Input" + (index + 1), text);
         }
 
         public void PressedButton(string buttonName)
@@ -114,11 +114,11 @@ namespace CodeLocks.UI
 
                             SetAllInputTexts(text);
 
-                            EffectManager.sendUIEffect(soundEffectId, (short)soundEffectId, SteamId, true);
+                            EffectManager.sendUIEffect(soundEffectId, (short)soundEffectId, TransportConnection, true);
 
                             yield return new WaitForSeconds(0.4f);
 
-                            EffectManager.askEffectClearByID(soundEffectId, SteamId);
+                            EffectManager.askEffectClearByID(soundEffectId, TransportConnection);
 
                             CodeEnteredCallback(Player, CodeLock, parsed.Value);
 

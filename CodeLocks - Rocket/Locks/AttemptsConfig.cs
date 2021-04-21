@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Xml.Serialization;
 
 namespace CodeLocks.Locks
 {
@@ -7,7 +9,17 @@ namespace CodeLocks.Locks
     {
         public float Cooldown { get; set; }
 
-        public byte[]? Damages { get; set; }
+        [XmlIgnore]
+        public byte[]? Damages
+        {
+            get => ParsedDamages?.Select(x => (byte) x).ToArray() ?? new byte[] {0, 30, 50, 255};
+            set => ParsedDamages = value?.Select(x => (int)x).ToArray();
+        }
+        
+
+        [XmlArray("Damages")]
+        [XmlArrayItem("Damage")]
+        public int[]? ParsedDamages { get; set; }
 
         public AttemptsConfig()
         {

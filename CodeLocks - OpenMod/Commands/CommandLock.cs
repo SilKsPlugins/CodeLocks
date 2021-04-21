@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using OpenMod.API.Commands;
+using OpenMod.API.Permissions;
 using OpenMod.API.Prioritization;
 using OpenMod.Core.Commands;
 using OpenMod.Unturned.Commands;
@@ -21,16 +22,19 @@ namespace CodeLocks.Commands
         private readonly IConfiguration _configuration;
         private readonly IStringLocalizer _stringLocalizer;
         private readonly CodeLockManager _codeLockManager;
+        private readonly IPermissionChecker _permissionChecker;
 
         public CommandLock(
             IConfiguration configuration,
             IStringLocalizer stringLocalizer,
             CodeLockManager codeLockManager,
+            IPermissionChecker permissionChecker,
             IServiceProvider serviceProvider) : base(serviceProvider)
         {
             _configuration = configuration;
             _stringLocalizer = stringLocalizer;
             _codeLockManager = codeLockManager;
+            _permissionChecker = permissionChecker;
         }
 
         protected override async UniTask OnExecuteAsync()
@@ -60,7 +64,21 @@ namespace CodeLocks.Commands
                 return;
             }
 
+            var canChangeLock = false;
+
             if (codeLock.Users.Contains(user.SteamId.m_SteamID))
+            {
+                if (codeLock.Users.First() == user.SteamId.m_SteamID)
+                    canChangeLock = true; 
+                else if (_configuration.GetValue("nonOwnerCanChangeCode", true))
+                    canChangeLock = true;
+            }
+
+            if (!canChangeLock &&
+                await _permissionChecker.CheckPermissionAsync(user, "bypass") == PermissionGrantResult.Grant)
+                canChangeLock = true;
+
+            if (canChangeLock)
             {
                 _codeLockManager.RemoveCodeLock(lockable.InstanceId);
 

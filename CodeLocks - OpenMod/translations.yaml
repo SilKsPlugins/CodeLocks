@@ -5,5 +5,5 @@ commands:
     code_added: "This object has been locked with the code {Code}."
     code_changed: "This object's lock has been changed to the code {Code}."
     code_removed: "This object's has been unlocked."
-    no_access: "You do not have access to this object's locks."
+    no_access: "You do not have access to set this object's locks."
     no_code: "There is no code lock on this object."

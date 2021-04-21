@@ -3,6 +3,15 @@ effects:
   success: 29124
   failure: 29125
 
+# Whether or not the owner must enter the code each time
+rememberOwner: true
+
+# Whether or not other users need to enter the code every time
+rememberUsers: true
+
+# Whether or not users who aren't the owner can change the lock
+nonOwnerCanChangeCode: true
+
 attempts:
   cooldown: 60 # Cooldown in seconds
   damages:

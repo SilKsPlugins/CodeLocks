@@ -1,6 +1,7 @@
 ﻿using CodeLocks.Locks;
 using JetBrains.Annotations;
 using Rocket.API;
+using Rocket.Core;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using System.Collections.Generic;
@@ -76,7 +77,21 @@ namespace CodeLocks.Commands
                 return;
             }
 
+            var canChangeLock = false;
+
             if (codeLock.Users.Contains(player.CSteamID.m_SteamID))
+            {
+                if (codeLock.Users.First() == player.CSteamID.m_SteamID)
+                    canChangeLock = true;
+                else if (CodeLocksPlugin.Instance.Configuration.Instance.NonOwnerCanChangeCode)
+                    canChangeLock = true;
+            }
+
+            if (!canChangeLock &&
+                R.Permissions.HasPermission(player, "bypasslock"))
+                canChangeLock = true;
+
+            if (canChangeLock)
             {
                 codeLockManager.RemoveCodeLock(lockable.InstanceId);
 

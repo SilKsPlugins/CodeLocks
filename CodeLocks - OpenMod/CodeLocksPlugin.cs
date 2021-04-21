@@ -4,16 +4,23 @@ using Cysharp.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using OpenMod.API.Permissions;
 using OpenMod.API.Plugins;
 using OpenMod.Core.Helpers;
+using OpenMod.Core.Permissions;
 using OpenMod.Unturned.Plugins;
+using SDG.NetPak;
 using SDG.Unturned;
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using ObjectManager = CodeLocks.Locks.ObjectManager;
+
+[assembly: RegisterPermission("bypass", DefaultGrant = PermissionGrantResult.Deny,
+    Description = "Allows the user to lock/unlock any lockable object.")]
 
 [assembly: PluginMetadata("CodeLocks", DisplayName = "CodeLocks", Author = "SilK")]
 namespace CodeLocks
@@ -28,6 +35,8 @@ namespace CodeLocks
         private readonly ObjectManager _objectManager;
 
         private readonly List<Attempt> _attempts;
+
+        private bool _interceptAndAllow;
 
         public CodeLocksPlugin(
             IConfiguration configuration,
@@ -46,6 +55,8 @@ namespace CodeLocks
             _objectManager = objectManager;
 
             _attempts = new List<Attempt>();
+
+            _interceptAndAllow = false;
         }
 
         protected override async UniTask OnLoadAsync()
@@ -95,18 +106,51 @@ namespace CodeLocks
 
             if (codeLock.Code == enteredCode)
             {
-                codeLock.Users.Add(steamId.m_SteamID);
+                if (!codeLock.Users.Contains(steamId.m_SteamID) && _configuration.GetValue("rememberUsers", true))
+                    codeLock.Users.Add(steamId.m_SteamID);
 
                 _attempts.RemoveAll(a => a.SteamId == steamId && a.InstanceId == codeLock.InstanceId);
 
                 _objectManager.UpdateBarricade(codeLock, steamId);
 
                 if (_objectManager.TryGetBarricade(codeLock.InstanceId,
-                    out var x, out var y, 
-                    out var plant, out var index, out _,
-                    out var drop) && drop.interactable is InteractableStorage)
+                        out var x, out var y,
+                        out var plant, out var index, out _,
+                        out var drop) &&
+                    (drop.interactable is InteractableStorage || drop.interactable is InteractableDoor))
                 {
-                    BarricadeManager.instance.askStoreStorage(steamId, x, y, plant, index, false);
+                    var constructor = typeof(ServerInvocationContext).GetConstructor(
+                        BindingFlags.NonPublic | BindingFlags.Instance, null,
+                        new[]
+                        {
+                            typeof(ServerInvocationContext.EOrigin),
+                            typeof(SteamPlayer),
+                            typeof(NetPakReader),
+                            typeof(ServerMethodInfo)
+                        }, null);
+
+                    if (constructor == null)
+                        throw new Exception($"Couldn't retrieve constructor of {nameof(ServerInvocationContext)}.");
+
+                    NetPakReader reader = null!;
+                    ServerMethodInfo info = null!;
+
+                    var context = (ServerInvocationContext)constructor.Invoke(new object[]
+                        {ServerInvocationContext.EOrigin.Loopback, player.channel.owner, reader, info});
+
+                    _interceptAndAllow = true;
+
+                    switch (drop.interactable)
+                    {
+                        case InteractableDoor:
+                            BarricadeManager.ReceiveToggleDoorRequest(context, x, y, plant, index);
+                            break;
+                        case InteractableStorage:
+                            BarricadeManager.ReceiveStoreStorageRequest(context, x, y, plant, index, false);
+                            break;
+                    }
+
+                    _interceptAndAllow = false;
                 }
             }
             else
@@ -135,6 +179,13 @@ namespace CodeLocks
 
         private void OnCheckingAccess(CSteamID steamId, Interactable storage, ref bool intercept, ref bool shouldAllow)
         {
+            if (_interceptAndAllow)
+            {
+                intercept = true;
+                shouldAllow = true;
+                return;
+            }
+
             BarricadeManager.tryGetInfo(storage.transform, 
                 out _, out _, out _, out _, out _,
                 out var drop);
@@ -144,7 +195,19 @@ namespace CodeLocks
 
             intercept = true;
 
-            if (!codeLock.Users.Contains(steamId.m_SteamID))
+            var showKeypad = true;
+
+            if (codeLock.Users.Contains(steamId.m_SteamID))
+            {
+                var isOwner = codeLock.Users.First() == steamId.m_SteamID;
+
+                if (isOwner && _configuration.GetValue("rememberOwner", true))
+                    showKeypad = false;
+                else if (_configuration.GetValue("rememberUsers", true))
+                    showKeypad = false;
+            }
+
+            if (showKeypad)
             {
                 var player = PlayerTool.getPlayer(steamId);
                 if (player == null) return;

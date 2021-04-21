@@ -4,11 +4,13 @@ using CodeLocks.UI;
 using HarmonyLib;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
+using SDG.NetPak;
 using SDG.Unturned;
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using ObjectManager = CodeLocks.Locks.ObjectManager;
 
@@ -23,6 +25,8 @@ namespace CodeLocks
         private UIManager _uiManager = null!;
 
         private readonly List<Attempt> _attempts = new();
+
+        private bool _interceptAndAllow = false;
 
         public const string HarmonyId = "com.iamsilk.codelocks";
         public Harmony? HarmonyInstance { get; private set; }
@@ -81,7 +85,7 @@ namespace CodeLocks
             { "commands_codelock_code_added", "This object has been locked with the code {0}." },
             { "commands_codelock_code_changed", "This object's lock has been changed to the code {0}." },
             { "commands_codelock_code_removed", "This object's has been unlocked." },
-            { "commands_codelock_no_access", "<color=red>You do not have access to this object's locks.</color>" },
+            { "commands_codelock_no_access", "<color=red>You do not have access to set this object's locks.</color>" },
             { "commands_codelock_no_code", "<color=red>There is no code lock on this object.</color>" },
         };
 
@@ -96,18 +100,51 @@ namespace CodeLocks
 
             if (codeLock.Code == enteredCode)
             {
-                codeLock.Users.Add(steamId.m_SteamID);
+                if (!codeLock.Users.Contains(steamId.m_SteamID) && Configuration.Instance.RememberUsers)
+                    codeLock.Users.Add(steamId.m_SteamID);
 
                 _attempts.RemoveAll(a => a.SteamId == steamId && a.InstanceId == codeLock.InstanceId);
 
                 _objectManager.UpdateBarricade(codeLock, steamId);
 
                 if (_objectManager.TryGetBarricade(codeLock.InstanceId,
-                    out var x, out var y,
-                    out var plant, out var index, out _,
-                    out var drop) && drop.interactable is InteractableStorage)
+                        out var x, out var y,
+                        out var plant, out var index, out _,
+                        out var drop) &&
+                    (drop.interactable is InteractableStorage || drop.interactable is InteractableDoor))
                 {
-                    BarricadeManager.instance.askStoreStorage(steamId, x, y, plant, index, false);
+                    var constructor = typeof(ServerInvocationContext).GetConstructor(
+                        BindingFlags.NonPublic | BindingFlags.Instance, null,
+                        new[]
+                        {
+                            typeof(ServerInvocationContext.EOrigin),
+                            typeof(SteamPlayer),
+                            typeof(NetPakReader),
+                            typeof(ServerMethodInfo)
+                        }, null);
+
+                    if (constructor == null)
+                        throw new Exception($"Couldn't retrieve constructor of {nameof(ServerInvocationContext)}.");
+
+                    NetPakReader reader = null!;
+                    ServerMethodInfo info = null!;
+
+                    var context = (ServerInvocationContext) constructor.Invoke(new object[]
+                        {ServerInvocationContext.EOrigin.Loopback, player.channel.owner, reader, info});
+
+                    _interceptAndAllow = true;
+
+                    switch (drop.interactable)
+                    {
+                        case InteractableDoor:
+                            BarricadeManager.ReceiveToggleDoorRequest(context, x, y, plant, index);
+                            break;
+                        case InteractableStorage:
+                            BarricadeManager.ReceiveStoreStorageRequest(context, x, y, plant, index, false);
+                            break;
+                    }
+
+                    _interceptAndAllow = false;
                 }
             }
             else
@@ -136,6 +173,13 @@ namespace CodeLocks
 
         private void OnCheckingAccess(CSteamID steamId, Interactable storage, ref bool intercept, ref bool shouldAllow)
         {
+            if (_interceptAndAllow)
+            {
+                intercept = true;
+                shouldAllow = true;
+                return;
+            }
+
             BarricadeManager.tryGetInfo(storage.transform,
                 out _, out _, out _, out _, out _,
                 out var drop);
@@ -145,7 +189,19 @@ namespace CodeLocks
 
             intercept = true;
 
-            if (!codeLock.Users.Contains(steamId.m_SteamID))
+            var showKeypad = true;
+
+            if (codeLock.Users.Contains(steamId.m_SteamID))
+            {
+                var isOwner = codeLock.Users.First() == steamId.m_SteamID;
+
+                if (isOwner && Configuration.Instance.RememberOwner)
+                    showKeypad = false;
+                else if (Configuration.Instance.RememberUsers)
+                    showKeypad = false;
+            }
+
+            if (showKeypad)
             {
                 var player = PlayerTool.getPlayer(steamId);
                 if (player == null) return;

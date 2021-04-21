@@ -4,6 +4,8 @@ using Rocket.API;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using System.Collections.Generic;
+using System.Linq;
+using Rocket.Core;
 using UnityEngine;
 
 namespace CodeLocks.Commands
@@ -51,7 +53,21 @@ namespace CodeLocks.Commands
                 return;
             }
 
-            if (!codeLock.Users.Contains(player.CSteamID.m_SteamID))
+            var canChangeLock = false;
+
+            if (codeLock.Users.Contains(player.CSteamID.m_SteamID))
+            {
+                if (codeLock.Users.First() == player.CSteamID.m_SteamID)
+                    canChangeLock = true;
+                else if (CodeLocksPlugin.Instance.Configuration.Instance.NonOwnerCanChangeCode)
+                    canChangeLock = true;
+            }
+
+            if (!canChangeLock &&
+                R.Permissions.HasPermission(player, "bypasslock"))
+                canChangeLock = true;
+
+            if (!canChangeLock)
             {
                 Say("commands_codelock_no_access");
                 return;

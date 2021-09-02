@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
@@ -38,8 +39,8 @@ namespace CodeLocks
             ref bool shouldAllow);
         public static event CheckingStorageAccess? OnCheckingStorageAccess;
 
-        public delegate void BarricadeDestroyed(BarricadeRegion region, ushort index);
-        public static event BarricadeDestroyed OnBarricadeDestroyed = null!;
+        public delegate void BarricadeDestroyed(BarricadeDrop drop);
+        public static event BarricadeDestroyed? OnBarricadeDestroyed;
 
         [HarmonyPatch]
         private class Patches
@@ -82,9 +83,9 @@ namespace CodeLocks
 
             [HarmonyPatch(typeof(BarricadeManager), "updateStateInternal")]
             [HarmonyPrefix]
-            private static void UpdatingStateInternal(Transform barricade, byte[] state, int size, ref bool shouldReplicate)
+            private static void UpdatingStateInternal(Transform transform, byte[] state, int size, ref bool shouldReplicate)
             {
-                OnUpdatingStateInternal?.Invoke(barricade, state, size, ref shouldReplicate);
+                OnUpdatingStateInternal?.Invoke(transform, state, size, ref shouldReplicate);
             }
 
             [HarmonyPatch(typeof(InteractableStorage), "checkStore")]
@@ -102,12 +103,12 @@ namespace CodeLocks
                 return false;
             }
 
-            [HarmonyPatch(typeof(BarricadeManager), "destroyBarricade")]
+            [HarmonyPatch(typeof(BarricadeManager), "destroyBarricade", typeof(BarricadeDrop), typeof(byte), typeof(byte), typeof(ushort))]
             [HarmonyPrefix]
             [HarmonyPriority(Priority.Last)]
-            private static void DestroyBarricade(BarricadeRegion region, ushort index)
+            private static void DestroyBarricade(BarricadeDrop barricade)
             {
-                OnBarricadeDestroyed?.Invoke(region, index);
+                OnBarricadeDestroyed?.Invoke(barricade);
             }
         }
     }

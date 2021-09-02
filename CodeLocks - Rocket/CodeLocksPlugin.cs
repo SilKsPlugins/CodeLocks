@@ -136,11 +136,11 @@ namespace CodeLocks
 
                     switch (drop.interactable)
                     {
-                        case InteractableDoor:
-                            BarricadeManager.ReceiveToggleDoorRequest(context, x, y, plant, index);
+                        case InteractableDoor door:
+                            door.ReceiveToggleRequest(context, !door.isOpen);
                             break;
-                        case InteractableStorage:
-                            BarricadeManager.ReceiveStoreStorageRequest(context, x, y, plant, index, false);
+                        case InteractableStorage storage:
+                            storage.ReceiveInteractRequest(context, false);
                             break;
                     }
 

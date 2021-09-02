@@ -11,22 +11,18 @@ namespace CodeLocks.Locks
 {
     public class ObjectManager
     {
-        private static readonly ClientStaticMethod<byte, byte, ushort, ushort, byte[]> s_SendBarricadeUpdateState;
+        private static readonly ClientInstanceMethod<byte[]> s_SendUpdateState;
 
-        private static readonly
-            ClientStaticMethod<byte, byte, ushort, ushort, ulong, ulong> s_SendBarricadeOwnerAndGroup;
+        private static readonly ClientInstanceMethod<ulong, ulong> s_SendOwnerAndGroup;
 
         static ObjectManager()
         {
-            s_SendBarricadeUpdateState =
-                AccessTools
-                    .StaticFieldRefAccess<BarricadeManager, ClientStaticMethod<byte, byte, ushort, ushort, byte[]>>(
-                        "SendBarricadeUpdateState");
+            s_SendUpdateState =
+                AccessTools.StaticFieldRefAccess<BarricadeDrop, ClientInstanceMethod<byte[]>>("SendUpdateState");
 
-            s_SendBarricadeOwnerAndGroup =
-                AccessTools
-                    .StaticFieldRefAccess<BarricadeManager, ClientStaticMethod<byte, byte, ushort, ushort, ulong, ulong>>(
-                        "SendBarricadeOwnerAndGroup");
+            s_SendOwnerAndGroup =
+                AccessTools.StaticFieldRefAccess<BarricadeDrop, ClientInstanceMethod<ulong, ulong>>(
+                    "SendOwnerAndGroup");
         }
 
         private readonly Lazy<CodeLockManager> _codeLockManager;
@@ -162,11 +158,11 @@ namespace CodeLocks.Locks
             var transportConnection = Provider.findTransportConnection(steamId) ??
                                       throw new Exception("Could not get transport connection for player");
 
-            s_SendBarricadeUpdateState.Invoke(ENetReliability.Reliable, transportConnection, x, y, plant, index, state);
+            s_SendUpdateState.Invoke(drop.GetNetId(), ENetReliability.Reliable, transportConnection, state);
 
             if (drop.interactable is not InteractableDoor)
             {
-                s_SendBarricadeOwnerAndGroup.Invoke(ENetReliability.Reliable, transportConnection, x, y, plant, index,
+                s_SendOwnerAndGroup.Invoke(drop.GetNetId(), ENetReliability.Reliable, transportConnection,
                     steamId.m_SteamID, 0);
             }
         }
@@ -293,10 +289,8 @@ namespace CodeLocks.Locks
             }
         }
 
-        private void OnBarricadeDestroyed(BarricadeRegion region, ushort index)
+        private void OnBarricadeDestroyed(BarricadeDrop drop)
         {
-            var drop = region.drops[index];
-
             if (_codeLockManager.Value.GetCodeLock(drop.instanceID) != null)
                 _codeLockManager.Value.RemoveCodeLock(drop.instanceID);
         }

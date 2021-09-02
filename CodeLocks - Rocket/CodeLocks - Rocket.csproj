@@ -23,7 +23,7 @@
 	    <IncludeAssets>compile</IncludeAssets>
 	  </PackageReference>
 
-	  <PackageReference Include="OpenMod.Unturned.Redist" Version="3.21.11-beta4">
+	  <PackageReference Include="OpenMod.Unturned.Redist" Version="3.21.25-preview.1">
 	    <IncludeAssets>compile</IncludeAssets>
 	  </PackageReference>
 	</ItemGroup>

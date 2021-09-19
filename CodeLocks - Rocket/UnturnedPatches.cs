@@ -12,10 +12,10 @@ namespace CodeLocks
         public delegate void BarricadesSave();
         public static event BarricadesSave? OnBarricadesSave;
 
-        public delegate void BarricadeRegionSending(SteamPlayer player, byte x, byte y, ushort plant);
+        public delegate void BarricadeRegionSending(SteamPlayer player, byte x, byte y, NetId parentNetId);
         public static event BarricadeRegionSending? OnBarricadeRegionSending;
 
-        public delegate void BarricadeRegionSent(SteamPlayer player, byte x, byte y, ushort plant);
+        public delegate void BarricadeRegionSent(SteamPlayer player, byte x, byte y, NetId parentNetId);
         public static event BarricadeRegionSent? OnBarricadeRegionSent;
 
         public delegate void CheckingDoorAccess(
@@ -53,16 +53,16 @@ namespace CodeLocks
 
             [HarmonyPatch(typeof(BarricadeManager), "SendRegion")]
             [HarmonyPrefix]
-            private static void PreSendRegion(SteamPlayer client, byte x, byte y, ushort plant)
+            private static void PreSendRegion(SteamPlayer client, byte x, byte y, NetId parentNetId)
             {
-                OnBarricadeRegionSending?.Invoke(client, x, y, plant);
+                OnBarricadeRegionSending?.Invoke(client, x, y, parentNetId);
             }
 
             [HarmonyPatch(typeof(BarricadeManager), "SendRegion")]
             [HarmonyPostfix]
-            private static void PostSendRegion(SteamPlayer client, byte x, byte y, ushort plant)
+            private static void PostSendRegion(SteamPlayer client, byte x, byte y, NetId parentNetId)
             {
-                OnBarricadeRegionSent?.Invoke(client, x, y, plant);
+                OnBarricadeRegionSent?.Invoke(client, x, y, parentNetId);
             }
 
             [HarmonyPatch(typeof(InteractableDoor), "checkToggle")]

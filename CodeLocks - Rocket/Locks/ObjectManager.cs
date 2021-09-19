@@ -223,9 +223,25 @@ namespace CodeLocks.Locks
 
         private System.Action? _restoreBarricadeRegion;
 
-        private void OnBarricadeRegionSending(SteamPlayer player, byte x, byte y, ushort plant)
+        private void OnBarricadeRegionSending(SteamPlayer player, byte x, byte y, NetId parentNetId)
         {
-            if (!BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
+            BarricadeRegion region;
+            
+            if (parentNetId == NetId.INVALID)
+            {
+                if (!BarricadeManager.tryGetRegion(x, y, ushort.MaxValue, out region))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                region = NetIdRegistry.Get<BarricadeRegion>(parentNetId);
+                if (region == null)
+                {
+                    return;
+                }
+            }
 
             if (region.barricades.Count == 0 || region.drops.Count != region.barricades.Count) return;
 
@@ -261,7 +277,7 @@ namespace CodeLocks.Locks
             };
         }
 
-        private void OnBarricadeRegionSent(SteamPlayer player, byte x, byte y, ushort plant)
+        private void OnBarricadeRegionSent(SteamPlayer player, byte x, byte y, NetId parentNetId)
         {
             _restoreBarricadeRegion?.Invoke();
         }

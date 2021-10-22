@@ -12,7 +12,7 @@ rememberUsers: true
 # Whether or not users who aren't the owner can change the lock
 nonOwnerCanChangeCode: true
 
-# Whether or not users who own the barricade can lock the barricade
+# Whether or not users who do not own the barricade can lock it
 onlyOwnerCanLock: false
 
 attempts:

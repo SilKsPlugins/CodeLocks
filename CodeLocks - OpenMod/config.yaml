@@ -12,6 +12,9 @@ rememberUsers: true
 # Whether or not users who aren't the owner can change the lock
 nonOwnerCanChangeCode: true
 
+# Whether or not users who own the barricade can lock the barricade
+onlyOwnerCanLock: false
+
 attempts:
   cooldown: 60 # Cooldown in seconds
   damages:

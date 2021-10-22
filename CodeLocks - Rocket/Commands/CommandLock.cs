@@ -67,6 +67,15 @@ namespace CodeLocks.Commands
 
             var codeLockManager = CodeLocksPlugin.Instance!.CodeLockManager;
 
+            if (CodeLocksPlugin.Instance.Configuration.Instance.OnlyOwnerCanLock)
+            {
+                if (lockable.Barricade.GetServersideData().owner != player.CSteamID.m_SteamID)
+                {
+                    Say("commands_codelock_no_access");
+                    return;
+                }
+            }
+
             var codeLock = codeLockManager.GetCodeLock(lockable.InstanceId);
             if (codeLock == null)
             {

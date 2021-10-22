@@ -7,9 +7,10 @@ namespace CodeLocks.Configuration
     {
         public EffectsConfig? Effects { get; set; } = new();
 
-        public bool RememberOwner;
-        public bool RememberUsers;
-        public bool NonOwnerCanChangeCode;
+        public bool RememberOwner { get; set; }
+        public bool RememberUsers { get; set; }
+        public bool NonOwnerCanChangeCode { get; set; }
+        public bool OnlyOwnerCanLock { get; set; }
 
         public AttemptsConfig? Attempts { get; set; } = new();
 
@@ -20,6 +21,7 @@ namespace CodeLocks.Configuration
             RememberOwner = true;
             RememberUsers = true;
             NonOwnerCanChangeCode = true;
+            OnlyOwnerCanLock = false;
 
             Attempts = new();
         }

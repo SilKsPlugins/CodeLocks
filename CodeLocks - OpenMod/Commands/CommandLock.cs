@@ -53,6 +53,14 @@ namespace CodeLocks.Commands
             if (lockable == null)
                 throw new UserFriendlyException(_stringLocalizer["commands:codelock:no_lockable_object"]);
 
+            if (_configuration.GetValue("onlyOwnerCanLock", false))
+            {
+                if (lockable.Barricade.GetServersideData().owner != user.SteamId.m_SteamID)
+                {
+                    throw new UserFriendlyException(_stringLocalizer["commands:codelock:no_access"]);
+                }
+            }
+
             var codeLock = _codeLockManager.GetCodeLock(lockable.InstanceId);
             if (codeLock == null)
             {
